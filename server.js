@@ -71,7 +71,7 @@ app.post('/register', function(req,res) {
 			});
 		}else{
 			if(result.rows[0] === undefined){
-				pool.query('INSERT INTO users.users (passwords, user_name) VALUES( $1, $2);', [pass ,userName], function(err, result) {
+				pool.query('INSERT INTO users (passwords, user_name) VALUES( $1, $2);', [pass ,userName], function(err, result) {
 					if(err) {
 						res.send({
 							"error": err.message
