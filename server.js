@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 
 var config = {
   user: process.env.user,
-  database: process.env.database,
+  database: process.env.DATABASE_URL,
   password: process.env.password, 
   host: process.env.host, 
   port: process.env.port, 
