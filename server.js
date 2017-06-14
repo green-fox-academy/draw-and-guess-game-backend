@@ -11,7 +11,6 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-
 var config = {
   user: user,
   database: database,
