@@ -33,7 +33,7 @@ app.post('/login', function(req,res) {
 	const userName = req.body.user;
 	const pass = req.body.pass;
 
-	pool.query('SELECT passwords FROM users.users WHERE user_name = $1', [userName], function(err, result) {
+	pool.query('SELECT passwords FROM users WHERE user_name = $1', [userName], function(err, result) {
 		if(err) {
 			res.send({
 				"error": err.message
@@ -64,7 +64,7 @@ app.post('/register', function(req,res) {
 	const pass = req.body.pass;
 
 
-	pool.query('SELECT user_name FROM users.users WHERE user_name = $1', [userName], function(err, result) {
+	pool.query('SELECT user_name FROM users WHERE user_name = $1', [userName], function(err, result) {
 		if(err) {
 			res.send({
 				"error": err.message
