@@ -12,11 +12,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 var config = {
-  user: user,
-  database: database,
-  password: password, 
-  host: host, 
-  port: port, 
+  user: process.env.user,
+  database: process.env.database,
+  password: process.env.password, 
+  host: process.env.host, 
+  port: process.env.port, 
   max: 10, 
   idleTimeoutMillis: 30000,
 };
