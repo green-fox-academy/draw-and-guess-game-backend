@@ -12,11 +12,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 var config = {
-  user: 'jihrmbcyejlfju',
-  database: 'd7sf0esvaif5lv',
-  password: '1dd07e9b47013d559b5e4a12574e6e823cecb8eefe8768f693cede1ad765b4c9', 
-  host: 'ec2-54-75-231-195.eu-west-1.compute.amazonaws.com', 
-  port: 5432, 
+  user: user,
+  database: database,
+  password: password, 
+  host: host, 
+  port: port, 
   max: 10, 
   idleTimeoutMillis: 30000,
 };
