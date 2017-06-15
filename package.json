@@ -9,7 +9,9 @@
     "dotenv": "^4.0.0",
     "express": "^4.15.3",
     "jsonwebtoken": "^7.4.1",
-    "pg": "^6.2.4"
+    "pg": "^6.2.4",
+    "supertest": "^3.0.0",
+    "tape": "^4.6.3"
   },
   "devDependencies": {},
   "scripts": {
