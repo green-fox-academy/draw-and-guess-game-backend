@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const pg = require('pg');
 const jwt = require('jsonwebtoken');
+
 require('dotenv').config()
 
 const app = express();
@@ -26,11 +27,37 @@ const pool = new pg.Pool(config);
 const table = process.env.TABLE;
 const secretKey = process.env.KEY;
 
-
 module.exports.query = function (text, values, callback) {
   console.log('query:', text, values);
   return pool.query(text, values, callback);
 };
+
+
+
+const authenticated = express.Router(); 
+
+authenticated.use(function(req, res, next) {
+	let token = req.body.token || req.query.token || req.headers['auth'];
+	if (token) {
+		jwt.verify(token, secretKey, function(err, decoded) {      
+			if (err) {
+				return res.json({ success: false, message: 'Failed to authenticate token.' });    
+			} else {
+				req.decoded = decoded;
+				next();
+			}
+		});
+	} else {
+		return res.status(401).send({ 
+			success: false, 
+			message: 'No token provided.' 
+		});
+	}
+});
+
+
+app.use('/protected', authenticated);
+
 
 app.post('/login', function(req,res) {
 	const userName = req.body.user;
@@ -97,33 +124,11 @@ app.post('/register', function(req,res) {
 	});
 })
 
-//////////////////////////////////////////
-app.post('/protected', function(req,res) {
-	const token = req.body.token;
 
-	jwt.verify(token, secretKey, function(err, decoded) {
-		if(err) {
-			res.status(401).json({
-				"status": "error",
-				"message": "Failed to authenticate"
-			});
-			//middlewear
-		} else {
-			if(decoded === undefined) {
-				res.status(404).json({
-					"status": "error",
-					"message": "No such user"
-				});
-			} else {
-				res.status(200).json({
-					"status": "allowed",
-					"message": decoded.user
-				});
-			}
-		}
-	});
+app.get('/protected', function(req,res) {
+	res.send('heloooo');
 })
 
 app.listen(process.env.PORT);
 
-module.exports = app; 
+module.exports = app;
