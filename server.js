@@ -94,6 +94,30 @@ app.post('/register', function(req,res) {
 	});
 })
 
-
+//////////////////////////////////////////
+app.post('/protected', function(req,res) {
+	const token = req.body.token;
+	
+	jwt.verify(token, 'shhhhhhhhh', function(err, decoded) {
+		if(err){
+			res.status(401).send({
+				"status": "error",
+				"message": "Failed to authenticate"
+			})
+		}else{
+			if(decoded === undefined){
+				res.status(404).send({
+					"status": "error",
+					"message": "No such user"
+				})
+			}else{
+				res.status(200).send({
+					"status": "allowed",
+					"message": decoded.user
+				})
+			}
+		}
+	});
+})
 
 app.listen(process.env.PORT || 3000);
