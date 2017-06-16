@@ -14,11 +14,11 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const config = {
-  user: process.env.user,
-  database: process.env.database,
-  password: process.env.password, 
-  host: process.env.host, 
-  port: process.env.DATAPORT, 
+  user: process.env.USER,
+  database: process.env.DATABASE,
+  password: process.env.PASSWORD, 
+  host: process.env.HOST, 
+  port: process.env.DATAPORT,
   max: 10, 
   idleTimeoutMillis: 30000,
 };
@@ -55,8 +55,9 @@ authenticated.use(function(req, res, next) {
 	}
 });
 
-
 app.use('/protected', authenticated);
+
+
 
 
 app.post('/login', function(req,res) {
@@ -126,7 +127,10 @@ app.post('/register', function(req,res) {
 
 
 app.get('/protected', function(req,res) {
-	res.send('heloooo');
+	res.json({
+		"status": "Allowed",
+		"message": "Your token verified."
+	});
 })
 
 app.listen(process.env.PORT);
