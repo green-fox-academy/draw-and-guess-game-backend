@@ -14,10 +14,10 @@ app.use(cors());
 app.use(bodyParser.json());
 
 const config = {
-  user: process.env.USER,
-  database: process.env.DATABASE,
-  password: process.env.PASSWORD, 
-  host: process.env.HOST, 
+  user: process.env.user,
+  database: process.env.database,
+  password: process.env.password, 
+  host: process.env.host, 
   port: process.env.DATAPORT,
   max: 10, 
   idleTimeoutMillis: 30000,
