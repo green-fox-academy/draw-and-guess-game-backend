@@ -66,8 +66,6 @@ app.post('/login', function(req,res) {
   const pass = req.body.pass;
 
   pool.query('SELECT passwords FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
-    const hashedPassword = result.rows[0].passwords;
-
     if(err) {
       res.json({
         "error": err.message
@@ -77,7 +75,7 @@ app.post('/login', function(req,res) {
         res.json({
           "status": "error", "message": "Wrong username or password."
         })
-      } else if(passwordHash.verify(pass, hashedPassword)){
+      } else if(passwordHash.verify(pass, result.rows[0].passwords)){
         let token = jwt.sign({"user": userName, "password": pass}, secretKey);
         res.json({
           success: true,
