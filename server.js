@@ -5,6 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const pg = require('pg');
 const jwt = require('jsonwebtoken');
+const passwordHash = require('password-hash');
 
 require('dotenv').config()
 
@@ -65,6 +66,8 @@ app.post('/login', function(req,res) {
   const pass = req.body.pass;
 
   pool.query('SELECT passwords FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
+    const hashedPassword = result.rows[0].passwords;
+
     if(err) {
       res.json({
         "error": err.message
@@ -74,7 +77,7 @@ app.post('/login', function(req,res) {
         res.json({
           "status": "error", "message": "Wrong username or password."
         })
-      } else if(result.rows[0].passwords === pass){
+      } else if(passwordHash.verify(pass, hashedPassword)){
         let token = jwt.sign({"user": userName, "password": pass}, secretKey);
         res.json({
           success: true,
@@ -93,7 +96,7 @@ app.post('/login', function(req,res) {
 
 app.post('/register', function(req,res) {
   const userName = req.body.user;
-  const pass = req.body.pass;
+  const pass = passwordHash.generate(req.body.pass);
 
   pool.query('SELECT user_name FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
     if(err) {
