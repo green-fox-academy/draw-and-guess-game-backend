@@ -13,7 +13,6 @@ authenticated.use(function(req, res, next) {
       if (err) {
         return res.status(401).json({ "status": "error", "message": "Authentication required" });    
       } else {
-        actualUserName = decoded.user;
         next();
       }
     });
