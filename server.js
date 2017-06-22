@@ -6,90 +6,32 @@ const cors = require('cors');
 const pg = require('pg');
 const jwt = require('jsonwebtoken');
 const passwordHash = require('password-hash');
+const config = require('./database_config.js');
+const authentication = require('./authentication.js');
 
 require('dotenv').config()
 
 const app = express();
-
 app.use(cors());
 app.use(bodyParser.json());
 
-const config = {
-  user: process.env.user,
-  database: process.env.database,
-  password: process.env.password, 
-  host: process.env.host, 
-  port: process.env.DATAPORT,
-  max: 10, 
-  idleTimeoutMillis: 30000,
-};
-
-const pool = new pg.Pool(config);
 const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
-
 const secretKey = process.env.KEY;
 let actualUserName;
 
-module.exports.query = function (text, values, callback) {
-  console.log('query:', text, values);
-  return pool.query(text, values, callback);
-};
+const querySettings = require('./database_query_settings.js');
+
+const pool = new pg.Pool(config);
+module.exports.query = querySettings;
 
 
-
-const authenticated = express.Router(); 
-
-authenticated.use(function(req, res, next) {
-  let token = req.headers['auth'];
-  if (token) {
-    jwt.verify(token, secretKey, function(err, decoded) {      
-      if (err) {
-        return res.status(401).json({ "status": "error", "message": "Authentication required" });    
-      } else {
-        actualUserName = decoded.user;
-        next();
-      }
-    });
-  } else {
-    return res.status(401).json({ "status": "error", "message": "Authentication required" });
-  }
-});
-
-app.use('/room', authenticated);
+app.use('/room', authentication);
 
 
-
-
-app.post('/login', function(req,res) {
-  const userName = req.body.user;
-  const pass = req.body.pass;
-
-  pool.query('SELECT passwords FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
-    if(err) {
-      res.json({
-        "error": err.message
-      });
-    } else {
-      if(!result.rows[0]){
-        res.json({
-          "status": "error", "message": "Wrong username or password."
-        })
-      } else if(passwordHash.verify(pass, result.rows[0].passwords)){
-        let token = jwt.sign({"user": userName, "password": pass}, secretKey);
-        res.json({
-          success: true,
-          token: token,
-          user: userName
-        })
-      } else {
-        res.json({
-          "status": "error", "message": "Wrong username or password."
-        })
-      }
-    }
-  });
-})
+app.post('/login', function(req,res){
+  loginPost(req,res)}
+);
 
 
 app.post('/register', function(req,res) {
@@ -174,6 +116,38 @@ app.get('/room', function(req,res) {
     }
   })
 })
+
+
+function loginPost(req,res) {
+  const userName = req.body.user;
+  const pass = req.body.pass;
+
+  pool.query('SELECT passwords FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
+    if(err) {
+      res.json({
+        "error": err.message
+      });
+    } else {
+      if(!result.rows[0]){
+        res.json({
+          "status": "error", "message": "Wrong username or password."
+        })
+      } else if(passwordHash.verify(pass, result.rows[0].passwords)){
+        let token = jwt.sign({"user": userName, "password": pass}, secretKey);
+        res.json({
+          success: true,
+          token: token,
+          user: userName
+        })
+      } else {
+        res.json({
+          "status": "error", "message": "Wrong username or password."
+        })
+      }
+    }
+  })
+}
+
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
