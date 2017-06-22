@@ -5,7 +5,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const pg = require('pg');
 const jwt = require('jsonwebtoken');
-const passwordHash = require('password-hash');
+var bcrypt = require('bcrypt');
 const config = require('./database_config.js');
 const authentication = require('./authentication.js');
 const querySettings = require('./database_query_settings.js');
@@ -19,6 +19,7 @@ app.use(bodyParser.json());
 const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
 const secretKey = process.env.KEY;
+const saltRounds = 10;
 
 const pool = new pg.Pool(config);
 module.exports.query = querySettings;
@@ -45,8 +46,8 @@ function loginPost(req,res) {
     } else {
       if(!result.rows[0]){
         res.json( passOrUserError );
-      } else if(passwordHash.verify(pass, result.rows[0].passwords)){
-        let token = jwt.sign({"user": userName, "password": pass}, secretKey);
+      } else if(bcrypt.compareSync(pass, result.rows[0].passwords)){
+        const token = jwt.sign({"user": userName, "password": pass}, secretKey);
         res.json({
           success: true,
           token: token,
@@ -61,7 +62,7 @@ function loginPost(req,res) {
 
 function registerPost(req,res) {
   const userName = req.body.user;
-  const pass = passwordHash.generate(req.body.pass);
+  const pass = bcrypt.hashSync(req.body.pass, saltRounds);
 
   pool.query('SELECT user_name FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
     if(err) {
@@ -72,7 +73,7 @@ function registerPost(req,res) {
           if(err) {
             res.json( { "error": err.message } );
           } else {
-            let token = jwt.sign({"user": userName, "password": pass}, secretKey);
+            const token = jwt.sign({"user": userName, "password": pass}, secretKey);
             res.json({
               success: true,
               token: token,
@@ -95,7 +96,7 @@ function postNewRoom(req,res) {
   const token = req.headers['auth'];
 
   jwt.verify(token, secretKey, function(err, decoded) {
-    let owner = decoded.user;
+    const owner = decoded.user;
     pool.query('INSERT INTO ' + roomTable + ' (name, owner) VALUES( $1, $2) RETURNING *;', [roomName , owner], function(err, result) {
       if(err){
         console.log(result);
@@ -103,7 +104,7 @@ function postNewRoom(req,res) {
           { "status": "error", "message": "Could not create the room" }
         )
       } else {
-        let createdRoom = JSON.parse(JSON.stringify(result.rows[0]));
+        const createdRoom = JSON.parse(JSON.stringify(result.rows[0]));
         res.json({
         "status": "ok",
         "room": createdRoom 
@@ -122,7 +123,7 @@ function getOneRoom(req,res) {
         { "status": "error", "message": "Room with the given id was not found" }
       )
     } else {
-      let selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
+      const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
       res.json( selectedRoom );
     }
   })
@@ -136,7 +137,7 @@ function getAllRoom(req,res) {
         { "status": "error" }
       )
     } else {
-      let rooms = JSON.parse(JSON.stringify(result.rows));
+      const rooms = JSON.parse(JSON.stringify(result.rows));
       res.json( rooms );
     }
   })
