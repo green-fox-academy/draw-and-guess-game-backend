@@ -8,6 +8,7 @@ const jwt = require('jsonwebtoken');
 const passwordHash = require('password-hash');
 const config = require('./database_config.js');
 const authentication = require('./authentication.js');
+const querySettings = require('./database_query_settings.js');
 
 require('dotenv').config()
 
@@ -19,36 +20,22 @@ const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
 const secretKey = process.env.KEY;
 
-const querySettings = require('./database_query_settings.js');
-
 const pool = new pg.Pool(config);
 module.exports.query = querySettings;
 
 app.use('/room', authentication);
 
-app.post('/login', function(req,res){
-  loginPost(req,res);
-});
+app.post('/login', loginPost);
+app.post('/register', registerPost);
+app.post('/room', postNewRoom);
 
-app.post('/register', function(req, res){
-  registerPost(req, res);
-});
-
-app.post('/room', function(req, res){
-  postNewRoom(req, res);
-})
-
-app.get('/room/:id', function(req, res){
-  getOneRoom(req, res);
-})
-
-app.get('/room', function(req, res){
-  getAllRoom(req, res);
-})
+app.get('/room/:id', getOneRoom);
+app.get('/room', getAllRoom);
 
 function loginPost(req,res) {
   const userName = req.body.user;
   const pass = req.body.pass;
+  const passOrUserError = { "status": "error", "message": "Wrong username or password." }
 
   pool.query('SELECT passwords FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
     if(err) {
@@ -57,9 +44,7 @@ function loginPost(req,res) {
       });
     } else {
       if(!result.rows[0]){
-        res.json({
-          "status": "error", "message": "Wrong username or password."
-        })
+        res.json( passOrUserError );
       } else if(passwordHash.verify(pass, result.rows[0].passwords)){
         let token = jwt.sign({"user": userName, "password": pass}, secretKey);
         res.json({
@@ -68,9 +53,7 @@ function loginPost(req,res) {
           user: userName
         })
       } else {
-        res.json({
-          "status": "error", "message": "Wrong username or password."
-        })
+        res.json( passOrUserError );
       }
     }
   })
