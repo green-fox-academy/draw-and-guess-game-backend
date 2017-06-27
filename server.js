@@ -47,7 +47,7 @@ function loginPost(req,res) {
       if(!result.rows[0]){
         res.json( passOrUserError );
       } else if(bcrypt.compareSync(pass, result.rows[0].passwords)){
-        const token = jwt.sign({"user": userName, "password": pass}, secretKey);
+        const token = jwt.sign({"user": userName}, secretKey);
         res.json({
           success: true,
           token: token,
@@ -76,8 +76,7 @@ function registerPost(req,res) {
             const token = jwt.sign({"user": userName, "password": pass}, secretKey);
             res.json({
               success: true,
-              token: token,
-              user: userName
+              token: token
             })
           }
         });
