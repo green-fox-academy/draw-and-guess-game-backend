@@ -51,7 +51,6 @@ function loginPost(req,res) {
         res.json({
           success: true,
           token: token,
-          user: userName
         })
       } else {
         res.json( passOrUserError );
@@ -73,7 +72,7 @@ function registerPost(req,res) {
           if(err) {
             res.json( { "error": err.message } );
           } else {
-            const token = jwt.sign({"user": userName, "password": pass}, secretKey);
+            const token = jwt.sign({"user": userName}, secretKey);
             res.json({
               success: true,
               token: token
