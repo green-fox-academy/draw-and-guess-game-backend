@@ -9,6 +9,8 @@ const bcrypt = require('bcrypt');
 const config = require('./database_config.js');
 const authentication = require('./authentication.js');
 const querySettings = require('./database_query_settings.js');
+const uuid = require('node-uuid')
+const fs = require('fs');
 
 require('dotenv').config()
 
@@ -95,9 +97,8 @@ function postNewRoom(req,res) {
 
   jwt.verify(token, secretKey, function(err, decoded) {
     const owner = decoded.user;
-    pool.query('INSERT INTO ' + roomTable + ' (name, owner) VALUES( $1, $2) RETURNING *;', [roomName , owner], function(err, result) {
+    pool.query('INSERT INTO ' + roomTable + ' (name, owner, status) VALUES( $1, $2, $3) RETURNING *;', [roomName , owner, 0], function(err, result) {
       if(err){
-        console.log(result);
         res.json(
           { "status": "error", "message": "Could not create the room" }
         )
@@ -137,6 +138,55 @@ function getAllRoom(req,res) {
     } else {
       const rooms = JSON.parse(JSON.stringify(result.rows));
       res.json( rooms );
+    }
+  })
+}
+
+app.post('/room/:id/image', saveImage);
+
+function saveImage(req,res) {
+  const roomID = req.params.id;
+
+  pool.query('SELECT * FROM ' + roomTable + ' WHERE id = $1', [ roomID ],function(err, result) {
+    if(err){
+      res.json(
+        { "status": "error" }
+      )
+    } else {
+      const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
+        if(selectedRoom.image_url === null){
+          const image = req.body.image_data;
+          const fileName = uuid.v4();
+          const filePath = __dirname + "\\image\\" + fileName + ".png" 
+          const base64Data = image.replace(/^data:image\/png;base64,/, "");
+
+          fs.existsSync("image") || fs.mkdirSync("image");
+          fs.writeFile(filePath,  new Buffer(base64Data, "base64"), function(err) {
+            if(err) {
+                res.json(
+                  { "status": "error" }
+                )
+            }else{
+              pool.query('UPDATE '+ roomTable +' SET image_url = $1 WHERE id = $2;', [filePath, roomID] ,function(err, result) {
+              if(err){
+                res.json(
+                  { "status": err.message }
+                )
+              } else {
+                console.info("The file was saved!");
+                res.json({
+                  "status": "ok",
+                  "path": filePath
+                });
+              }
+              })
+            }});
+        }else {
+          res.json({
+            "status": "error",
+            "message": "The room has an image already."
+          });
+        }
     }
   })
 }
