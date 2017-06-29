@@ -157,7 +157,7 @@ function saveImage(req,res) {
         if(selectedRoom.image_url === null){
           const image = req.body.image_data;
           const fileName = uuid.v4();
-          const filePath = __dirname + "\\image\\" + fileName + ".png" 
+          const filePath = __dirname + "/image/" + fileName + ".png" 
           const base64Data = image.replace(/^data:image\/png;base64,/, "");
 
           fs.existsSync("image") || fs.mkdirSync("image");
