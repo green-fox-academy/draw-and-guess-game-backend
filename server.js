@@ -14,6 +14,8 @@ const fs = require('fs');
 
 require('dotenv').config()
 
+app.use('/image', express.static('image'));
+
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
