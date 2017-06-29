@@ -150,7 +150,7 @@ function saveImage(req,res) {
   pool.query('SELECT * FROM ' + roomTable + ' WHERE id = $1', [ roomID ],function(err, result) {
     if(err){
       res.json(
-        { "status": "error" }
+        { "status": err.message }
       )
     } else {
       const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
@@ -164,7 +164,7 @@ function saveImage(req,res) {
           fs.writeFile(filePath,  new Buffer(base64Data, "base64"), function(err) {
             if(err) {
                 res.json(
-                  { "status": "error" }
+                  { "status": err.message }
                 )
             }else{
               pool.query('UPDATE '+ roomTable +' SET image_url = $1 WHERE id = $2;', [filePath, roomID] ,function(err, result) {
