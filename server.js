@@ -26,16 +26,20 @@ const saltRounds = 10;
 const pool = new pg.Pool(config);
 module.exports.query = querySettings;
 
+//app.use('/image', express.static('image'));
 app.use(__dirname + '/image', express.static('image'));
 
 app.use('/room', authentication);
+app.use('/user', authentication);
 
 app.post('/login', loginPost);
 app.post('/register', registerPost);
 app.post('/room', postNewRoom);
+app.post('/room/:id/image', saveImage);
 
 app.get('/room/:id', getOneRoom);
 app.get('/room', getAllRoom);
+app.get('/user', selectUser);
 
 function loginPost(req,res) {
   const userName = req.body.user;
@@ -72,7 +76,7 @@ function registerPost(req,res) {
       res.json( { "error": err.message } );
     } else {
       if(!result.rows[0]) {
-        pool.query('INSERT INTO ' + table + ' (passwords, user_name) VALUES( $1, $2);', [pass ,userName], function(err, result) {
+        pool.query('INSERT INTO ' + table + ' (passwords, user_name, score) VALUES( $1, $2, $3);', [pass ,userName, 0], function(err, result) {
           if(err) {
             res.json( { "error": err.message } );
           } else {
@@ -144,8 +148,6 @@ function getAllRoom(req,res) {
   })
 }
 
-app.post('/room/:id/image', saveImage);
-
 function saveImage(req,res) {
   const roomID = req.params.id;
 
@@ -192,6 +194,27 @@ function saveImage(req,res) {
     }
   })
 }
+
+
+function selectUser(req, res){
+  const token = req.headers['auth'];
+  jwt.verify(token, secretKey, function(err, decoded) {
+    const userName = decoded.user;
+      pool.query('SELECT * FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
+      if(!result.rows[0]){
+        res.json(
+          { "status": "error", "message": "Room with the given id was not found" }
+        )
+      } else {
+        const selectedUser = JSON.parse(JSON.stringify(result.rows[0]));
+        res.json({
+          "name": selectedUser.user_name,
+          "score": selectedUser.score
+         });
+      }
+    })
+  })
+};
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
