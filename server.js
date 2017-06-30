@@ -160,31 +160,17 @@ function saveImage(req,res) {
       const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
         if(selectedRoom.image_url === null){
           const image = req.body.image_data;
-          const fileName = uuid.v4();
-          const filePath = __dirname + "/image/" + fileName + ".png" 
-          const base64Data = image.replace(/^data:image\/png;base64,/, "");
-
-          fs.existsSync("image") || fs.mkdirSync("image");
-          fs.writeFile(filePath,  new Buffer(base64Data, "base64"), function(err) {
-            if(err) {
-                res.json(
-                  { "status": err.message }
-                )
-            }else{
-              pool.query('UPDATE '+ roomTable +' SET image_url = $1 WHERE id = $2;', [filePath, roomID] ,function(err, result) {
-              if(err){
-                res.json(
-                  { "status": err.message }
-                )
-              } else {
-                console.info("The file was saved!");
-                res.json({
-                  "status": "ok",
-                  "path": filePath
-                });
-              }
-              })
-            }});
+          pool.query('UPDATE '+ roomTable +' SET image_url = $1 WHERE id = $2;', [image, roomID] ,function(err, result) {
+            if(err){
+              res.json(
+                { "status": err.message }
+              )
+            } else {
+              res.json({
+                "status": "ok",
+              });
+            }
+            })
         }else {
           res.json({
             "status": "error",
@@ -194,6 +180,57 @@ function saveImage(req,res) {
     }
   })
 }
+
+
+
+
+
+// function saveImage(req,res) {
+//   const roomID = req.params.id;
+
+//   pool.query('SELECT * FROM ' + roomTable + ' WHERE id = $1', [ roomID ],function(err, result) {
+//     if(err){
+//       res.json(
+//         { "status": err.message }
+//       )
+//     } else {
+//       const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
+//         if(selectedRoom.image_url === null){
+//           const image = req.body.image_data;
+//           const fileName = uuid.v4();
+//           const filePath = __dirname + "/image/" + fileName + ".png" 
+//           const base64Data = image.replace(/^data:image\/png;base64,/, "");
+
+//           fs.existsSync("image") || fs.mkdirSync("image");
+//           fs.writeFile(filePath,  new Buffer(base64Data, "base64"), function(err) {
+//             if(err) {
+//                 res.json(
+//                   { "status": err.message }
+//                 )
+//             }else{
+//               pool.query('UPDATE '+ roomTable +' SET image_url = $1 WHERE id = $2;', [filePath, roomID] ,function(err, result) {
+//               if(err){
+//                 res.json(
+//                   { "status": err.message }
+//                 )
+//               } else {
+//                 console.info("The file was saved!");
+//                 res.json({
+//                   "status": "ok",
+//                   "path": filePath
+//                 });
+//               }
+//               })
+//             }});
+//         }else {
+//           res.json({
+//             "status": "error",
+//             "message": "The room has an image already."
+//           });
+//         }
+//     }
+//   })
+// }
 
 
 function selectUser(req, res){
