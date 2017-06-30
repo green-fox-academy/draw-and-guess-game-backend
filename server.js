@@ -31,14 +31,11 @@ app.use(__dirname + '/image', express.static('image'));
 
 app.use('/room', authentication);
 app.use('/user', authentication);
-app.use('/edit', authentication);
 
 app.post('/login', loginPost);
 app.post('/register', registerPost);
 app.post('/room', postNewRoom);
 app.post('/room/:id/image', saveImage);
-
-app.post('/edit', editUname);
 
 app.get('/room/:id', getOneRoom);
 app.get('/room', getAllRoom);
@@ -204,9 +201,9 @@ function selectUser(req, res){
   jwt.verify(token, secretKey, function(err, decoded) {
     const userName = decoded.user;
       pool.query('SELECT * FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
-      if(err){
+      if(!result.rows[0]){
         res.json(
-          { "status": "error"}
+          { "status": "error", "message": "Room with the given id was not found" }
         )
       } else {
         const selectedUser = JSON.parse(JSON.stringify(result.rows[0]));
@@ -218,25 +215,6 @@ function selectUser(req, res){
     })
   })
 };
-
-function editUname(req, res) {
-  const token = req.headers['auth'];
-  const newUserName = req.body.user;
-  jwt.verify(token, secretKey, function(err, decoded) {
-    const userName = decoded.user;
-      pool.query('UPDATE ' + table + ' SET user_name = $1 WHERE user_name = $2 RETURNING *', [ newUserName, userName ], function(err, result) {
-      if(err){
-        res.json(
-          { "status": "error" }
-        )
-      } else {
-        res.json({
-          "name": newUserName,
-         });
-      }
-    })
-  })
-}
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
