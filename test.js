@@ -8,7 +8,7 @@ const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoidGVzdCIsInBhc3N3
 
 test('POST /login', function (assert) {
   const userData = {
-    "user":"Kacsa",
+    "user": "Kacsa",
     "pass": "kacsa"
   };
   request(app)
@@ -26,7 +26,7 @@ test('POST /login', function (assert) {
 
 test('POST /login with non-existent account', function (assert) {
   const userData = {
-    "user":"xxx",
+    "user": "xxx",
     "pass": "1234"
   };
   request(app)
@@ -45,7 +45,7 @@ test('POST /login with non-existent account', function (assert) {
 
 test('POST /login with incorrect password', function (assert) {
   const userData = {
-    "user":"test",
+    "user": "test",
     "pass": "1"
   };
   request(app)
@@ -81,9 +81,9 @@ test('POST /register with reserved username', function (assert) {
   });
 });
 
-test('POST /register', function (assert) {
+test('POST /register.If user doesn\'t exist then create one, else throw error', function (assert) {
   const userData = {
-    "user":"Kacsa",
+    "user": "Kacsa",
     "pass": "kacsa"
   };
   request(app)
