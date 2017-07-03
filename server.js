@@ -26,7 +26,6 @@ const saltRounds = 10;
 const pool = new pg.Pool(config);
 module.exports.query = querySettings;
 
-//app.use('/image', express.static('image'));
 app.use(__dirname + '/image', express.static('image'));
 
 app.use('/room', authentication);
