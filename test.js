@@ -154,13 +154,9 @@ test('POST /room/55/image', function (assert) {
   });
 });
 
-test('POST /room/55', function (assert) {
-  const userData = {
-    "image_url": "IMAGEFILESAMPLE35235cjqmrigherg"
-  };
+test('GET /room/55', function (assert) {
   request(app)
     .get('/room/55')
-    .send(userData)
     .set({"auth": token})
     .expect(200)
     .expect('Content-Type', /json/)
@@ -168,6 +164,33 @@ test('POST /room/55', function (assert) {
       const responseData = res.body;
     assert.error(err, 'No error');
     assert.same(responseData.id, 55);
+    assert.end();
+  });
+});
+
+test('GET /room', function (assert) {
+  request(app)
+    .get('/room')
+    .set({"auth": token})
+    .expect(200)
+    .expect('Content-Type', /json/)
+    .end(function (err, res) {
+      const responseData = res.body;
+    assert.error(err, 'No error');
+    assert.end();
+  });
+});
+
+test('GET /user', function (assert) {
+  request(app)
+    .get('/user')
+    .set({"auth": token})
+    .expect(200)
+    .expect('Content-Type', /json/)
+    .end(function (err, res) {
+      const responseData = res.body;
+    assert.error(err, 'No error');
+    assert.same(responseData.name, "test");
     assert.end();
   });
 });
