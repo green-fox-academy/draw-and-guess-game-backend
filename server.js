@@ -22,6 +22,13 @@ const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
 const secretKey = process.env.KEY;
 const saltRounds = 10;
+//const currentdate = new Date();
+// const currentTime = currentdate.getFullYear()+ "-"
+//                 + (currentdate.getMonth()+1) + "-" 
+//                 + currentdate.getDate() + " "
+//                 + currentdate.getHours() + ":"  
+//                 + currentdate.getMinutes() + ":" 
+//                 + currentdate.getSeconds();
 
 const pool = new pg.Pool(config);
 module.exports.query = querySettings;
@@ -101,17 +108,25 @@ function postNewRoom(req,res) {
   const token = req.headers['auth'];
 
   jwt.verify(token, secretKey, function(err, decoded) {
-    const owner = decoded.user;
-    pool.query('INSERT INTO ' + roomTable + ' (name, owner, status) VALUES( $1, $2, $3) RETURNING *;', [roomName , owner, 0], function(err, result) {
-      if(err){
-        res.json(
-          { "status": "error", "message": "Could not create the room" }
-        )
-      } else {
-        const createdRoom = JSON.parse(JSON.stringify(result.rows[0]));
-        res.json({
-        "status": "ok",
-        "room": createdRoom 
+    const user = decoded.user;
+    pool.query('SELECT id FROM ' + table + ' WHERE user_name = $1;', [user] ,function(err, result) {
+      if(err) { res.json({"err": err.message}) }
+      else{
+        const drawerID = result.rows[0].id;
+
+        pool.query('INSERT INTO ' + roomTable + ' (name, status, drawer_user_id, drawing, current_turn) VALUES( $1, $2, $3, $4, $5) RETURNING *;', 
+          [roomName, 0, drawerID, 'Elephant', 'drawer'], function(err, result) {
+          if(err){
+            res.json(
+              { "status": "error", "message": "Could not create the room, "+ err.message }
+            )
+          } else {
+            const createdRoom = JSON.parse(JSON.stringify(result.rows[0]));
+            res.json({
+            "status": "ok",
+            "room": createdRoom 
+            })
+          }
         })
       }
     })
@@ -199,6 +214,9 @@ function selectUser(req, res){
     })
   })
 };
+
+//app.put('/room/:id/refresh', refreshRoom);
+
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
