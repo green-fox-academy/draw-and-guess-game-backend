@@ -23,6 +23,7 @@ const roomTable = process.env.ROOM_TABLE;
 const secretKey = process.env.KEY;
 const saltRounds = 10;
 const currentdate = new Date();
+console.log(currentdate)
 const currentTime = currentdate.getFullYear()+ "-"
                 + (currentdate.getMonth()+1) + "-" 
                 + currentdate.getDate() + " "
@@ -215,11 +216,11 @@ function selectUser(req, res){
   })
 };
 
-app.put('/room/:id/refresh', refreshRoom);
+app.put('/room/:id', updateRoom);
 
-function refreshRoom(req,res) {
+function updateRoom(req,res) {
   const roomID = req.params.id;
-  const change = req.body.data;
+  const changeData = req.body;
   const token = req.headers['auth'];
   
   jwt.verify(token, secretKey, function(err, decoded) {
@@ -227,24 +228,32 @@ function refreshRoom(req,res) {
     pool.query('SELECT id FROM ' + table + ' WHERE user_name = $1;', [user] ,function(err, result) {    
     const guesserID = result.rows[0].id;
 
-    for(let i = 0; i < change.length; i++){
-      if(change[i][0] === 'guesser_user_id'){
-        change[i][1] = guesserID;
-      } else if (change[i][0] === 'guesser_joined_at'){
-        change[i][1] = currentTime;
-      }
-    }
+    let requstedDataChange= '';
+    let dataList = [roomID];
 
-      for(let i = 0; i < change.length; i++){
-        pool.query('UPDATE '+ roomTable +' SET '+ change[i][0] +' = $1 WHERE id = $2;', [change[i][1], roomID],  function(err, result) {
-        if(err) { res.json({"err": err.message}) }
-        else{
-          if(i === change.length-1){
-            res.json({'status':'ok'});
-            }
-          }
-        })
+    Object.keys(changeData).forEach((e, i) => {
+      let index = i+2
+      if(e === 'guesser_user_id'){
+        changeData[e] = guesserID;
+      } else if ( e === 'guesser_joined_at'){
+        changeData[e] = currentTime;
       }
+
+      if(Object.keys(changeData).length-1 === i){
+        requstedDataChange += e + ' = ' + '$' + index;
+      } else {
+        requstedDataChange += e + ' = ' + '$' + index + ', ';
+      }
+      dataList.push(changeData[e]);
+    })
+
+    pool.query('UPDATE '+ roomTable +' SET '+ requstedDataChange +' WHERE id = $1;', dataList,  function(err, result) {
+      if(err) { res.json({"err": err.message}) 
+        console.log(err)}
+      else{
+        res.json({'status':'ok'});
+      }       
+    })
     })
   })
 }
