@@ -22,13 +22,13 @@ const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
 const secretKey = process.env.KEY;
 const saltRounds = 10;
-//const currentdate = new Date();
-// const currentTime = currentdate.getFullYear()+ "-"
-//                 + (currentdate.getMonth()+1) + "-" 
-//                 + currentdate.getDate() + " "
-//                 + currentdate.getHours() + ":"  
-//                 + currentdate.getMinutes() + ":" 
-//                 + currentdate.getSeconds();
+const currentdate = new Date();
+const currentTime = currentdate.getFullYear()+ "-"
+                + (currentdate.getMonth()+1) + "-" 
+                + currentdate.getDate() + " "
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
 
 const pool = new pg.Pool(config);
 module.exports.query = querySettings;
@@ -215,8 +215,39 @@ function selectUser(req, res){
   })
 };
 
-//app.put('/room/:id/refresh', refreshRoom);
+app.put('/room/:id/refresh', refreshRoom);
 
+function refreshRoom(req,res) {
+  const roomID = req.params.id;
+  const change = req.body.data;
+  const token = req.headers['auth'];
+  
+  jwt.verify(token, secretKey, function(err, decoded) {
+    const user = decoded.user;
+    pool.query('SELECT id FROM ' + table + ' WHERE user_name = $1;', [user] ,function(err, result) {    
+    const guesserID = result.rows[0].id;
+
+    for(let i = 0; i < change.length; i++){
+      if(change[i][0] === 'guesser_user_id'){
+        change[i][1] = guesserID;
+      } else if (change[i][0] === 'guesser_joined_at'){
+        change[i][1] = currentTime;
+      }
+    }
+
+      for(let i = 0; i < change.length; i++){
+        pool.query('UPDATE '+ roomTable +' SET '+ change[i][0] +' = $1 WHERE id = $2;', [change[i][1], roomID],  function(err, result) {
+        if(err) { res.json({"err": err.message}) }
+        else{
+          if(i === change.length-1){
+            res.json({'status':'ok'});
+            }
+          }
+        })
+      }
+    })
+  })
+}
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
