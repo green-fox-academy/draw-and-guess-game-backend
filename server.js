@@ -246,7 +246,7 @@ function updateRoom(req, res) {
         dataList.push(changeData[e]);
       })
 
-      pool.query('UPDATE '+ roomTable +' SET '+ requistedDataChange +' WHERE id = $1;', dataList,  function(err, result) {
+      pool.query('UPDATE ' + roomTable + ' SET ' + requistedDataChange + ' WHERE id = $1;', dataList,  function(err, result) {
         if(err) { res.json({"err": err.message }) } 
         else {
           res.json({'status':'ok'});
