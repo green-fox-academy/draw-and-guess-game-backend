@@ -52,7 +52,7 @@ function loginPost(req, res) {
   const pass = req.body.pass;
   const passOrUserError = { "status": "error", "message": "Wrong username or password." }
 
-  pool.query('SELECT passwords FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
+  pool.query('SELECT passwords, id FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
     if(err) {
       res.json({
         "error": err.message
@@ -61,7 +61,8 @@ function loginPost(req, res) {
       if(!result.rows[0]){
         res.json( passOrUserError );
       } else if(bcrypt.compareSync(pass, result.rows[0].passwords)){
-        const token = jwt.sign({"user": userName}, secretKey);
+        const userId = JSON.parse(JSON.stringify(result.rows[0])).id;
+        const token = jwt.sign({"user": userName, "id": userId}, secretKey);
         res.json({
           success: true,
           token: token,
@@ -82,11 +83,12 @@ function registerPost(req, res) {
       res.json( { "error": err.message } );
     } else {
       if(!result.rows[0]) {
-        pool.query('INSERT INTO ' + table + ' (passwords, user_name, score) VALUES( $1, $2, $3);', [pass ,userName, 0], function(err, result) {
+        pool.query('INSERT INTO ' + table + ' (passwords, user_name, score) VALUES( $1, $2, $3) RETURNING id;', [pass ,userName, 0], function(err, result) {
           if(err) {
             res.json( { "error": err.message } );
           } else {
-            const token = jwt.sign({"user": userName}, secretKey);
+            const userId = JSON.parse(JSON.stringify(result.rows[0])).id;
+            const token = jwt.sign({"user": userName, "id": userId}, secretKey);
             res.json({
               success: true,
               token: token
