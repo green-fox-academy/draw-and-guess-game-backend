@@ -20,6 +20,7 @@ app.use(bodyParser.json());
 
 const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
+const guessTable = process.env.GUESS_TABLE;
 const secretKey = process.env.KEY;
 const saltRounds = 10;
 const currentdate = new Date();
@@ -267,11 +268,16 @@ function guessedOrNot(req, res) {
     if(err) { res.json({"err": err.message }) }
     else {
       const drawed = JSON.parse(JSON.stringify(result.rows[0])).drawing;
-      if(guess.toLowerCase() === drawed.toLowerCase()) {
-        res.json({ "guessed": true })
-      } else {
-        res.json({ "guessed": false })
-      }
+      pool.query('INSERT INTO ' + guessTable + ' (room_id, guess, sended) VALUES( $1, $2, $3);', [roomID, guess, currentTime], function(err, result) {
+        if(err) { res.json({"err": err.message }) }
+        else {
+          if(guess.toLowerCase() === drawed.toLowerCase()) {
+            res.json({ "guessed": true })
+          } else {
+            res.json({ "guessed": false })
+          }
+        }
+      })
     }
   })
 }
