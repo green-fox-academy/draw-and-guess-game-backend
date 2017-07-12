@@ -42,6 +42,7 @@ app.post('/login', loginPost);
 app.post('/register', registerPost);
 app.post('/room', postNewRoom);
 app.post('/room/:id/image', saveImage);
+app.post('/room/:id/guess', guessedOrNot);
 
 app.get('/room/:id', getOneRoom);
 app.get('/room', getAllRoom);
@@ -68,7 +69,7 @@ function loginPost(req, res) {
           token: token,
         })
       } else {
-        res.json( passOrUserError );
+        res.json(passOrUserError);
       }
     }
   })
@@ -251,10 +252,27 @@ function updateRoom(req, res) {
       pool.query('UPDATE ' + roomTable + ' SET ' + requistedDataChange + ' WHERE id = $1;', dataList,  function(err, result) {
         if(err) { res.json({"err": err.message }) } 
         else {
-          res.json({'status':'ok'});
+          res.json({ 'status':'ok' });
         }       
       })
     })
+  })
+}
+
+function guessedOrNot(req, res) {
+  const roomID = req.params.id;
+  const guess = req.body.guess;
+
+  pool.query('SELECT drawing FROM ' + roomTable + ' WHERE id = $1;', [roomID], function(err, result) {
+    if(err) { res.json({"err": err.message }) }
+    else {
+      const drawed = JSON.parse(JSON.stringify(result.rows[0])).drawing;
+      if(guess.toLowerCase() === drawed.toLowerCase()) {
+        res.json({ "guessed": true })
+      } else {
+        res.json({ "guessed": false })
+      }
+    }
   })
 }
 
