@@ -11,6 +11,7 @@ const authentication = require('./authentication.js');
 const querySettings = require('./database_query_settings.js');
 const uuid = require('node-uuid')
 const fs = require('fs');
+const list = require('./random.js');
 
 require('dotenv').config()
 
@@ -41,6 +42,11 @@ app.post('/room/:id/guess', guessedOrNot);
 app.get('/room/:id', getOneRoom);
 app.get('/room', getAllRoom);
 app.get('/user', selectUser);
+
+function randomDraw(array) {
+  const index = Math.floor(Math.random() * array.length);
+  return array[index];
+}
 
 function getTime(){
   const currentdate = new Date();
@@ -121,9 +127,10 @@ function postNewRoom(req, res) {
       if(err) { res.json({ "err": err.message }) }
       else {
         const drawerID = result.rows[0].id;
+        const drawThat = randomDraw(list.drawings);
 
         pool.query('INSERT INTO ' + roomTable + ' (name, status, drawer_user_id, drawing, current_turn) VALUES( $1, $2, $3, $4, $5) RETURNING *;', 
-          [roomName, 0, drawerID, 'Elephant', 'drawer'], function(err, result) {
+          [roomName, 0, drawerID, drawThat, 'drawer'], function(err, result) {
           if(err){
             res.json(
               { "status": "error", "message": "Could not create the room, "+ err.message }
@@ -284,17 +291,17 @@ function guessedOrNot(req, res) {
   })
 }
 
-app.put('/room/:id/time', function twenty(req, res) {
-  const roomID = req.params.id;
-  setTimeout(function(){
-    pool.query('UPDATE ' + roomTable + ' SET time_is_up = $1 WHERE id = $2;', [true, roomID],  function(err, result) {
-      if(err) { res.json({"err": err.message }) }
-      else {
-        res.json({'Status': 'Time!!'})
-      }
-    })
-  }, 20000);
-});
+// app.put('/room/:id/time', function twenty(req, res) {
+//   const roomID = req.params.id;
+//   setTimeout(function(){
+//     pool.query('UPDATE ' + roomTable + ' SET time_is_up = $1 WHERE id = $2;', [true, roomID],  function(err, result) {
+//       if(err) { res.json({"err": err.message }) }
+//       else {
+//         res.json({'Status': 'Time!!'})
+//       }
+//     })
+//   }, 20000);
+// });
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
