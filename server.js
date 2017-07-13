@@ -20,17 +20,11 @@ app.use(bodyParser.json());
 
 const table = process.env.TABLE;
 const roomTable = process.env.ROOM_TABLE;
+const guessTable = process.env.GUESS_TABLE;
 const secretKey = process.env.KEY;
 const saltRounds = 10;
-const currentdate = new Date();
-const currentTime = currentdate.getFullYear()+ "-"
-                + (currentdate.getMonth()+1) + "-" 
-                + currentdate.getDate() + " "
-                + currentdate.getHours() + ":"  
-                + currentdate.getMinutes() + ":" 
-                + currentdate.getSeconds();
-
 const pool = new pg.Pool(config);
+
 module.exports.query = querySettings;
 
 app.use(__dirname + '/image', express.static('image'));
@@ -42,10 +36,22 @@ app.post('/login', loginPost);
 app.post('/register', registerPost);
 app.post('/room', postNewRoom);
 app.post('/room/:id/image', saveImage);
+app.post('/room/:id/guess', guessedOrNot);
 
 app.get('/room/:id', getOneRoom);
 app.get('/room', getAllRoom);
 app.get('/user', selectUser);
+
+function getTime(){
+  const currentdate = new Date();
+  const currentTime = currentdate.getFullYear()+ "-"
+                + (currentdate.getMonth()+1) + "-" 
+                + currentdate.getDate() + " "
+                + currentdate.getHours() + ":"  
+                + currentdate.getMinutes() + ":" 
+                + currentdate.getSeconds();
+  return currentTime
+}
 
 function loginPost(req, res) {
   const userName = req.body.user;
@@ -68,7 +74,7 @@ function loginPost(req, res) {
           token: token,
         })
       } else {
-        res.json( passOrUserError );
+        res.json(passOrUserError);
       }
     }
   })
@@ -228,6 +234,7 @@ function updateRoom(req, res) {
     const user = decoded.user;
     pool.query('SELECT id FROM ' + table + ' WHERE user_name = $1;', [user], function(err, result) {    
       const guesserID = result.rows[0].id;
+      const currentTime = getTime();
 
       let requistedDataChange = '';
       let dataList = [roomID];
@@ -251,10 +258,33 @@ function updateRoom(req, res) {
       pool.query('UPDATE ' + roomTable + ' SET ' + requistedDataChange + ' WHERE id = $1;', dataList,  function(err, result) {
         if(err) { res.json({"err": err.message }) } 
         else {
-          res.json({'status':'ok'});
+          res.json({ 'status':'ok' });
         }       
       })
     })
+  })
+}
+
+function guessedOrNot(req, res) {
+  const roomID = req.params.id;
+  const guess = req.body.guess;
+
+  pool.query('SELECT drawing FROM ' + roomTable + ' WHERE id = $1;', [roomID], function(err, result) {
+    if(err) { res.json({"err": err.message }) }
+    else {
+      const currentTime = getTime();
+      const drawed = JSON.parse(JSON.stringify(result.rows[0])).drawing;
+      pool.query('INSERT INTO ' + guessTable + ' (room_id, guess, sended) VALUES( $1, $2, $3);', [roomID, guess, currentTime], function(err, result) {
+        if(err) { res.json({"err": err.message }) }
+        else {
+          if(guess.toLowerCase() === drawed.toLowerCase()) {
+            res.json({ "guessed": true })
+          } else {
+            res.json({ "guessed": false })
+          }
+        }
+      })
+    }
   })
 }
 
