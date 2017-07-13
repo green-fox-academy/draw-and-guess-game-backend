@@ -145,13 +145,16 @@ function getOneRoom(req, res) {
   const roomID = req.params.id;
 
   pool.query('SELECT * FROM ' + roomTable + ' WHERE id = $1', [roomID], function(err, result) {
-    if(!result.rows[0]){
-      res.json(
-        { "status": "error", "message": "Room with the given id was not found" }
-      )
-    } else {
-      const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
-      res.json( selectedRoom );
+    if(err) { res.json({ "err": err.message }) }
+    else {
+      if(!result.rows[0]){
+        res.json(
+          { "status": "error", "message": "Room with the given id was not found" }
+          )
+      } else {
+        const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
+        res.json( selectedRoom );
+      }
     }
   })
 }
