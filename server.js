@@ -154,7 +154,7 @@ function getOneRoom(req, res) {
   pool.query('SELECT * FROM ' + roomTable + ' WHERE id = $1', [roomID], function(err, result) {
     if(err) { res.json({ "err": err.message }) }
     else {
-      if(!result.rows[0]){
+      if(!result.rows[0]) {
         res.json(
           { "status": "error", "message": "Room with the given id was not found" }
           )
@@ -192,7 +192,7 @@ function saveImage(req, res) {
       const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
         const image = req.body.image_data;
         pool.query('UPDATE ' + roomTable + ' SET image_url = $1 WHERE id = $2;', [image, roomID], function(err, result) {
-          if(err){
+          if(err) {
             res.json(
               { "status": err.message }
             )
@@ -290,18 +290,6 @@ function guessedOrNot(req, res) {
     }
   })
 }
-
-// app.put('/room/:id/time', function twenty(req, res) {
-//   const roomID = req.params.id;
-//   setTimeout(function(){
-//     pool.query('UPDATE ' + roomTable + ' SET time_is_up = $1 WHERE id = $2;', [true, roomID],  function(err, result) {
-//       if(err) { res.json({"err": err.message }) }
-//       else {
-//         res.json({'Status': 'Time!!'})
-//       }
-//     })
-//   }, 20000);
-// });
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
