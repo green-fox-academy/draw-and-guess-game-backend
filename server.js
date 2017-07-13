@@ -180,27 +180,20 @@ function saveImage(req, res) {
       )
     } else {
       const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
-        if(selectedRoom.image_url === null){
-          const image = req.body.image_data;
-          pool.query('UPDATE ' + roomTable + ' SET image_url = $1 WHERE id = $2;', [image, roomID], function(err, result) {
-            if(err){
-              res.json(
-                { "status": err.message }
-              )
-            } else {
-              res.json({
-                "status": "ok",
-              });
-            }
-            })
-        }else {
-          res.json({
-            "status": "error",
-            "message": "The room has an image already."
-          });
+        const image = req.body.image_data;
+        pool.query('UPDATE ' + roomTable + ' SET image_url = $1 WHERE id = $2;', [image, roomID], function(err, result) {
+          if(err){
+            res.json(
+              { "status": err.message }
+            )
+          } else {
+            res.json({
+              "status": "ok",
+            });
+          }
+          })
         }
-    }
-  })
+    })
 }
 
 function selectUser(req, res){
@@ -287,6 +280,18 @@ function guessedOrNot(req, res) {
     }
   })
 }
+
+app.put('/room/:id/time', function twenty(req, res) {
+  const roomID = req.params.id;
+  setTimeout(function(){
+    pool.query('UPDATE ' + roomTable + ' SET time_is_up = $1 WHERE id = $2;', [true, roomID],  function(err, result) {
+      if(err) { res.json({"err": err.message }) }
+      else {
+        res.json({'Status': 'Time!!'})
+      }
+    })
+  }, 20000);
+});
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
