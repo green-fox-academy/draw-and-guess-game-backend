@@ -73,7 +73,7 @@ function loginPost(req, res) {
       if(!result.rows[0]) {
         res.json(passOrUserError);
       } else if(bcrypt.compareSync(pass, result.rows[0].passwords)){
-        const userId = JSON.parse(JSON.stringify(result.rows[0])).id;
+        const userId = result.rows[0].id;
         const token = jwt.sign({"user": userName, "id": userId}, secretKey);
         res.json({
           success: true,
@@ -99,7 +99,7 @@ function registerPost(req, res) {
           if(err) {
             res.json({ "error": err.message });
           } else {
-            const userId = JSON.parse(JSON.stringify(result.rows[0])).id;
+            const userId = result.rows[0].id;
             const token = jwt.sign({"user": userName, "id": userId}, secretKey);
             res.json({
               success: true,
@@ -136,7 +136,7 @@ function postNewRoom(req, res) {
               { "status": "error", "message": "Could not create the room, "+ err.message }
             )
           } else {
-            const createdRoom = JSON.parse(JSON.stringify(result.rows[0]));
+            const createdRoom = result.rows[0];
             res.json({
             "status": "ok",
             "room": createdRoom 
@@ -159,7 +159,7 @@ function getOneRoom(req, res) {
           { "status": "error", "message": "Room with the given id was not found" }
           )
       } else {
-        const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
+        const selectedRoom = result.rows[0];
         res.json( selectedRoom );
       }
     }
@@ -174,7 +174,7 @@ function getAllRoom(req, res) {
         { "status": "error" }
       )
     } else {
-      const rooms = JSON.parse(JSON.stringify(result.rows));
+      const rooms = result.rows;
       res.json( rooms );
     }
   })
@@ -183,27 +183,18 @@ function getAllRoom(req, res) {
 function saveImage(req, res) {
   const roomID = req.params.id;
 
-  pool.query('SELECT * FROM ' + roomTable + ' WHERE id = $1', [roomID], function(err, result) {
-    if(err){
+  const image = req.body.image_data;
+  pool.query('UPDATE ' + roomTable + ' SET image_url = $1 WHERE id = $2;', [image, roomID], function(err, result) {
+    if(err) {
       res.json(
         { "status": err.message }
       )
     } else {
-      const selectedRoom = JSON.parse(JSON.stringify(result.rows[0]));
-        const image = req.body.image_data;
-        pool.query('UPDATE ' + roomTable + ' SET image_url = $1 WHERE id = $2;', [image, roomID], function(err, result) {
-          if(err) {
-            res.json(
-              { "status": err.message }
-            )
-          } else {
-            res.json({
-              "status": "ok",
-            });
-          }
-          })
-        }
-    })
+      res.json({
+        "status": "ok",
+      });
+    }
+  })
 }
 
 function selectUser(req, res){
@@ -216,7 +207,7 @@ function selectUser(req, res){
           { "status": "error", "message": "Room with the given id was not found" }
         )
       } else {
-        const selectedUser = JSON.parse(JSON.stringify(result.rows[0]));
+        const selectedUser = result.rows[0];
         res.json({
           "name": selectedUser.user_name,
           "score": selectedUser.score
@@ -276,7 +267,7 @@ function guessedOrNot(req, res) {
     if(err) { res.json({"err": err.message }) }
     else {
       const currentTime = getTime();
-      const drawed = JSON.parse(JSON.stringify(result.rows[0])).drawing;
+      const drawed = result.rows[0].drawing;
       pool.query('INSERT INTO ' + guessTable + ' (room_id, guess, sended) VALUES( $1, $2, $3);', [roomID, guess, currentTime], function(err, result) {
         if(err) { res.json({"err": err.message }) }
         else {
