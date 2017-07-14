@@ -292,16 +292,19 @@ function secondCreator(time) {
 function ping(req, res) {
   const roomID = req.params.id;
   pool.query('SELECT time_start FROM ' + roomTable + ' WHERE id = $1;', [roomID], function(err, result) { 
-    const time = secondCreator(result.rows[0].time_start);
-    const currentdate = new Date();
-    const currentTimeSeconds = secondCreator(currentdate);
+    if(err) { res.json({"err": err.message }) }
+    else {
+      const time = secondCreator(result.rows[0].time_start);
+      const currentdate = new Date();
+      const currentTimeSeconds = secondCreator(currentdate);
 
-    const difference = time+30 - currentTimeSeconds;
+      const difference = time+30 - currentTimeSeconds;
 
-    if(difference >= 0) {
-      res.json({ "remained": difference});
-    } else {
-      res.json({"status": "error"});
+      if(difference >= 0) {
+        res.json({ "remained": difference});
+      } else {
+        res.json({"status": "error"});
+      }
     }
   })
 }
