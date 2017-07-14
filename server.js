@@ -42,6 +42,7 @@ app.post('/room/:id/guess', guessedOrNot);
 app.get('/room/:id', getOneRoom);
 app.get('/room', getAllRoom);
 app.get('/user', selectUser);
+app.get('/room/:id/ping', ping);
 
 function randomDraw(array) {
   const index = Math.floor(Math.random() * array.length);
@@ -126,11 +127,12 @@ function postNewRoom(req, res) {
     pool.query('SELECT id FROM ' + table + ' WHERE user_name = $1;', [user], function(err, result) {
       if(err) { res.json({ "err": err.message }) }
       else {
+        const currentTime = getTime();
         const drawerID = result.rows[0].id;
         const drawThat = randomDraw(list.drawings);
 
-        pool.query('INSERT INTO ' + roomTable + ' (name, status, drawer_user_id, drawing, current_turn) VALUES( $1, $2, $3, $4, $5) RETURNING *;', 
-          [roomName, 0, drawerID, drawThat, 'drawer'], function(err, result) {
+        pool.query('INSERT INTO ' + roomTable + ' (name, status, drawer_user_id, drawing, current_turn, time_start) VALUES( $1, $2, $3, $4, $5, $6) RETURNING *;', 
+          [roomName, 0, drawerID, drawThat, 'drawer', currentTime], function(err, result) {
           if(err){
             res.json(
               { "status": "error", "message": "Could not create the room, "+ err.message }
@@ -237,7 +239,7 @@ function updateRoom(req, res) {
         let index = i+2
         if(e === 'guesser_user_id'){
           changeData[e] = guesserID;
-        } else if (e === 'guesser_joined_at'){
+        } else if(e === 'time_start'){
           changeData[e] = currentTime;
         }
 
@@ -281,6 +283,29 @@ function guessedOrNot(req, res) {
     }
   })
 }
+
+function secondCreator(time) {
+  let newTime = time.toString().slice(16, 24).split(':');
+  return parseInt(newTime[0]*60*60) + parseInt(newTime[1]*60) + parseInt(newTime[2]);
+}
+
+function ping(req, res) {
+  const roomID = req.params.id;
+  pool.query('SELECT time_start FROM ' + roomTable + ' WHERE id = $1;', [roomID], function(err, result) { 
+    const time = secondCreator(result.rows[0].time_start);
+    const currentdate = new Date();
+    const currentTimeSeconds = secondCreator(currentdate);
+
+    const difference = time+30 - currentTimeSeconds;
+
+    if(difference >= 0) {
+      res.json({ "remained": difference});
+    } else {
+      res.json({"status": "error"});
+    }
+  })
+}
+
 
 app.listen(process.env.PORT, function(){
   console.log('Server is running, Port: ' + process.env.PORT);
