@@ -265,11 +265,14 @@ function guessedOrNot(req, res) {
   const roomID = req.params.id;
   const guess = req.body.guess;
 
-  pool.query('SELECT drawing FROM ' + roomTable + ' WHERE id = $1;', [roomID], function(err, result) {
+  pool.query('SELECT drawing, drawer_user_id, guesser_user_id FROM ' + roomTable + ' WHERE id = $1;', 
+    [roomID], function(err, result) {
     if(err) { res.json({"err": err.message }) }
     else {
       const currentTime = getTime();
       const drawed = result.rows[0].drawing;
+      const drawerUser = result.rows[0].drawer_user_id;
+      const guesserUser = result.rows[0].guesser_user_id;
       pool.query('INSERT INTO ' + guessTable + ' (room_id, guess, sended) VALUES( $1, $2, $3);', [roomID, guess, currentTime], function(err, result) {
         if(err) { res.json({"err": err.message }) }
         else {
@@ -277,7 +280,13 @@ function guessedOrNot(req, res) {
             pool.query('UPDATE ' + roomTable + ' SET guessed = $1 WHERE id = $2;', [true, roomID], function(err, result) {
               if(err) { res.json({"err": err.message }) }
               else {
-                res.json({ "guessed": true })
+                pool.query('UPDATE ' + table + ' SET score = score + 1 WHERE id = $1 OR id = $2;',
+                [drawerUser, guesserUser], function(err, result) {
+                  if(err) { res.json({"err": err.message}) }
+                  else {
+                    res.json({ "guessed": true })
+                  }
+                })
               }
             })
           } else {
@@ -304,7 +313,7 @@ function ping(req, res) {
       const currentdate = new Date();
       const currentTimeSeconds = secondCreator(currentdate);
 
-      const difference = time+30 - currentTimeSeconds;
+      const difference = time+35 - currentTimeSeconds;
 
       if(difference >= 0) {
         res.json({ "remained": difference});
