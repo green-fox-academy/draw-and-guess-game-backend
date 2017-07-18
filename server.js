@@ -131,8 +131,8 @@ function postNewRoom(req, res) {
         const drawerID = result.rows[0].id;
         const drawThat = randomDraw(list.drawings);
 
-        pool.query('INSERT INTO ' + roomTable + ' (name, status, drawer_user_id, drawing, current_turn, time_start) VALUES( $1, $2, $3, $4, $5, $6) RETURNING *;', 
-          [roomName, 0, drawerID, drawThat, 'drawer', currentTime], function(err, result) {
+        pool.query('INSERT INTO ' + roomTable + ' (name, status, drawer_user_id, drawing, current_turn, time_start, guessed) VALUES( $1, $2, $3, $4, $5, $6, $7) RETURNING *;', 
+          [roomName, 0, drawerID, drawThat, 'drawer', currentTime, false], function(err, result) {
           if(err){
             res.json(
               { "status": "error", "message": "Could not create the room, "+ err.message }
@@ -274,7 +274,12 @@ function guessedOrNot(req, res) {
         if(err) { res.json({"err": err.message }) }
         else {
           if(guess.toLowerCase() === drawed.toLowerCase()) {
-            res.json({ "guessed": true })
+            pool.query('UPDATE ' + roomTable + ' SET guessed = $1 WHERE id = $2;', [true, roomID], function(err, result) {
+              if(err) { res.json({"err": err.message }) }
+              else {
+                res.json({ "guessed": true })
+              }
+            })
           } else {
             res.json({ "guessed": false })
           }
