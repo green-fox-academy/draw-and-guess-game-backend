@@ -204,11 +204,11 @@ function selectUser(req, res){
   jwt.verify(token, secretKey, function(err, decoded) {
     const userName = decoded.user;
       pool.query('SELECT * FROM ' + table + ' WHERE user_name = $1', [userName], function(err, result) {
-      if(!result.rows[0]){ res.json({ "status": err.message }) } 
+      if(err){ res.json({ "status": err.message }) } 
       else {
         const selectedUser = result.rows[0];
         pool.query('SELECT name, guessed FROM ' + roomTable + ' WHERE drawer_user_id = $1', [selectedUser.id], function(err, result) {
-          if(!result.rows[0]){ res.json({ "status": err.message }) }
+          if(err){ res.json({ "status": err.message }) }
           else {
             const myAllroom = result.rows;
             res.json({
