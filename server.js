@@ -291,7 +291,8 @@ function guessedOrNot(req, res) {
 
 function secondCreator(time) {
   let newTime = time.toString().slice(16, 24).split(':');
-  return parseInt(newTime[0]*60*60) + parseInt(newTime[1]*60) + parseInt(newTime[2]);
+  let days = time.toString().slice(8, 10);
+  return parseInt(days*24*60*60) + parseInt(newTime[0]*60*60) + parseInt(newTime[1]*60) + parseInt(newTime[2]);
 }
 
 function ping(req, res) {
